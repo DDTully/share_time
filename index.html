@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Bandit</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; }
+    label { display: block; margin: 10px 0; }
+    input { padding: 5px; width: 100px; }
+    button { padding: 10px 20px; margin: 10px 5px 0 0; cursor: pointer; }
+    #app { margin-top: 20px; }
+    #info p { font-size: 1.2em; }
+    #remainingList ul { list-style: none; padding: 0; }
+    #remainingList li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Time Bandit</h1>
+  <div id="setup">
+    <label>Target time (HH:MM): <input id="timeInput" type="time" value="19:58"></label>
+    <label>Number of people: <input id="peopleInput" type="number" min="1" value="3"></label>
+    <label>Buffer between (seconds): <input id="bufferInput" type="number" min="0" value="10"></label>
+    <button id="startBtn">Start</button>
+  </div>
+  <div id="app" style="display:none;">
+    <div id="info">
+      <p>Current Person: <span id="currentPerson"></span></p>
+      <p>People Remaining: <span id="peopleRemaining"></span></p>
+      <p>Time Left: <span id="timeLeft"></span></p>
+      <p>Behind Schedule: <span id="behindTime">00:00</span></p>
+      <p>Current Time: <span id="currentTime"></span></p>
+      <p>Target Time: <span id="targetTimeDisplay"></span></p>
+    </div>
+    <button id="finishBtn">Next</button>
+    <button id="restartBtn">Restart</button>
+    <div id="remainingList">
+      <h3>Remaining People:</h3>
+      <ul id="peopleList"></ul>
+    </div>
+  </div>
+  <audio id="alarmAudio" loop src="alarm.mp3"></audio>
+  <script>
+    let persons = [];
+    let timerInterval = null;
+    let bufferSec = 0;
+    let behindSchedule = 0;
+    let endTime = null;
+    let announceDone = false;
+    let currentClockInterval = null;
+    let ttsInterval = null;
+
+    function formatTime(seconds) {
+      const neg = seconds < 0;
+      const s = Math.ceil(Math.abs(seconds));
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      const formatted = `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+      return neg ? `-${formatted}` : formatted;
+    }
+
+    function updateList() {
+      const list = document.getElementById('peopleList');
+      list.innerHTML = '';
+      persons.forEach(p => {
+        const li = document.createElement('li');
+        li.textContent = `Person ${p.id}: ${formatTime(p.timeLeft)}`;
+        list.appendChild(li);
+      });
+    }
+
+    function updateTimeLeft() {
+      document.getElementById('timeLeft').textContent = formatTime(persons[0].timeLeft);
+    }
+
+    function nextPerson() {
+      if (timerInterval) clearInterval(timerInterval);
+      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
+      if (persons.length === 0) {
+        document.getElementById('info').innerHTML = '<p>All done!</p>';
+        document.getElementById('finishBtn').disabled = true;
+        return;
+      }
+      const current = persons[0];
+      document.getElementById('currentPerson').textContent = current.id;
+      document.getElementById('peopleRemaining').textContent = persons.length;
+      updateList();
+      updateTimeLeft();
+      announceDone = false;
+      timerInterval = setInterval(() => {
+        current.timeLeft -= 1;
+        updateTimeLeft();
+        const alarm = document.getElementById('alarmAudio');
+        if (current.timeLeft <= 0 && alarm.paused) {
+          alarm.play();
+        }
+        if (current.timeLeft <= -5) {
+          if (!ttsInterval) {
+            const others = persons.length - 1;
+            const text = others > 0 ? `${others} people remaining. Allow others to participate in spiritual enlightenment.` : 'No one else remaining. Allow others to participate in spiritual enlightenment.';
+            speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+            ttsInterval = setInterval(() => {
+              speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+            }, 5000);
+          }
+        }
+      }, 1000);
+    }
+
+    function handleFinish() {
+      const alarm = document.getElementById('alarmAudio');
+      alarm.pause();
+      alarm.currentTime = 0;
+      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
+      speechSynthesis.cancel();
+      if (timerInterval) clearInterval(timerInterval);
+      const current = persons.shift();
+      let remainder = current.timeLeft;
+      if (remainder > 0 && behindSchedule > 0) {
+        const reduce = Math.min(remainder, behindSchedule);
+        behindSchedule -= reduce;
+        document.getElementById('behindTime').textContent = formatTime(behindSchedule);
+        remainder -= reduce;
+      } else if (remainder < 0 && remainder < -bufferSec) {
+        const penalty = -(remainder + bufferSec);
+        behindSchedule += penalty;
+        document.getElementById('behindTime').textContent = formatTime(behindSchedule);
+      }
+      if (persons.length > 0) {
+        const now = new Date();
+        const totalSecondsLeft = (endTime - now) / 1000;
+        const totalBuffer = bufferSec * (persons.length - 1);
+        const available = totalSecondsLeft - totalBuffer - behindSchedule;
+        const perTime = available / persons.length;
+        persons = persons.map(p => ({ id: p.id, timeLeft: perTime }));
+        nextPerson();
+      } else {
+        document.getElementById('info').innerHTML = '<p>All done!</p>';
+        document.getElementById('finishBtn').disabled = true;
+      }
+    }
+
+    function restartGame() {
+      if (timerInterval) clearInterval(timerInterval);
+      if (currentClockInterval) clearInterval(currentClockInterval);
+      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
+      speechSynthesis.cancel();
+      const alarm = document.getElementById('alarmAudio');
+      alarm.pause();
+      alarm.currentTime = 0;
+      persons = [];
+      behindSchedule = 0;
+      bufferSec = 0;
+      document.getElementById('setup').style.display = 'block';
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('finishBtn').disabled = false;
+      document.getElementById('peopleList').innerHTML = '';
+      document.getElementById('currentPerson').textContent = '';
+      document.getElementById('timeLeft').textContent = '';
+      document.getElementById('behindTime').textContent = '00:00';
+      document.getElementById('currentTime').textContent = '';
+      document.getElementById('targetTimeDisplay').textContent = '';
+    }
+
+    function startGame() {
+      const targetTimeString = document.getElementById('timeInput').value;
+      const count = parseInt(document.getElementById('peopleInput').value);
+      const bufferValue = parseFloat(document.getElementById('bufferInput').value);
+      if (isNaN(bufferValue) || bufferValue < 0) {
+        alert('Please enter a valid buffer value (>=0)');
+        return;
+      }
+      bufferSec = bufferValue;
+      behindSchedule = 0;
+      if (!targetTimeString || isNaN(count) || count <= 0) {
+        alert('Please enter a valid target time and positive number of people');
+        return;
+      }
+      const [hours, minutes] = targetTimeString.split(':').map(Number);
+      const now = new Date();
+      let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+      if (target <= now) target.setDate(target.getDate() + 1);
+      endTime = target;
+      const totalSeconds = (target - now) / 1000;
+      const totalBuffer = bufferSec * (count - 1);
+      const usableSeconds = totalSeconds - totalBuffer;
+      const perTime = usableSeconds / count;
+      persons = [];
+      for (let i = 1; i <= count; i++) {
+        persons.push({ id: i, timeLeft: perTime });
+      }
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('behindTime').textContent = formatTime(behindSchedule);
+      document.getElementById('targetTimeDisplay').textContent = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+      const clockOpts = { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true };
+      document.getElementById('currentTime').textContent = new Date().toLocaleTimeString([], clockOpts);
+      currentClockInterval = setInterval(() => {
+        document.getElementById('currentTime').textContent = new Date().toLocaleTimeString([], clockOpts);
+      }, 1000);
+      nextPerson();
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('finishBtn').addEventListener('click', handleFinish);
+    document.getElementById('restartBtn').addEventListener('click', restartGame);
+  </script>
+</body>
+</html> 
