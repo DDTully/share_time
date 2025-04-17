@@ -5,18 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Share Your Time</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; }
-    label { display: block; margin: 10px 0; }
-    input { padding: 5px; width: 100px; }
-    button { padding: 10px 20px; margin: 10px 5px 0 0; cursor: pointer; }
-    #app { margin-top: 20px; }
-    #info p { font-size: 1.2em; }
+    :root {
+      --bg: #f4f4f9;
+      --card-bg: #fff;
+      --text: #333;
+      --input-border: #ccc;
+      --btn-bg: #6200ee;
+      --btn-text: #fff;
+      --btn-hover: #3700b3;
+      --btn-next: #03dac6;
+      --btn-pause: #fbbc04;
+      --btn-restart: #b00020;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        /* GitHub Dark Mode Colors */
+        --bg: #0d1117;
+        --card-bg: #161b22;
+        --text: #c9d1d9;
+        --input-border: #30363d;
+        --btn-bg: #238636;      /* Green success */
+        --btn-text: #ffffff;
+        --btn-hover: #2ea043;
+        --btn-next: #0969da;    /* Blue primary */
+        --btn-pause: #dbab09;   /* Yellow warning */
+        --btn-restart: #cf222e; /* Red danger */
+      }
+    }
+    body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+    #setup { max-width: 500px; margin: 1rem auto; background: var(--card-bg); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 1rem;
+      display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; align-items: center;
+    }
+    #setup button { grid-column: 2; justify-self: start; }
+    #app { max-width: 500px; margin: 1rem auto; background: var(--card-bg); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 1rem; display: block; }
+    label { display: block; margin: 0.5rem 0; font-size: 1rem; }
+    input, button { width: 100%; padding: 0.75rem; margin: 0.5rem 0; font-size: 1rem; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--input-border); }
+    button { background: var(--btn-bg); color: var(--btn-text); border: none; cursor: pointer; }
+    button:hover { background: var(--btn-hover); }
+    button#finishBtn { background: var(--btn-next); color: var(--btn-text); }
+    button#pauseBtn { background: var(--btn-pause); color: var(--btn-text); }
+    button#restartBtn { background: var(--btn-restart); color: var(--btn-text); }
+    #info p { display: grid; grid-template-columns: 1fr auto; margin: 0.5rem 0; }
+    #controls { display: flex; justify-content: space-between; gap: 0.5rem; margin: 1rem 0; }
+    #controls button { flex: 1; margin: 0; }
+    #remainingList h3 { margin-top: 1rem; }
     #remainingList ul { list-style: none; padding: 0; }
-    #remainingList li { margin: 5px 0; }
+    #remainingList li { padding: 0.25rem 0; border-bottom: 1px solid #eee; }
+    @media (min-width: 600px) {
+      input, button { width: auto; display: inline-block; margin-right: 0.5rem; }
+      #setup, #app { padding: 2rem; }
+    }
   </style>
 </head>
 <body>
-<h1>Share Your Time</h1>
   <div id="setup">
     <label>Target time (HH:MM): <input id="timeInput" type="time" value="19:58"></label>
     <label>Number of people: <input id="peopleInput" type="number" min="1" value="3"></label>
@@ -32,9 +73,11 @@
       <p>Current Time: <span id="currentTime"></span></p>
       <p>Target Time: <span id="targetTimeDisplay"></span></p>
     </div>
-    <button id="finishBtn">Next</button>
-    <button id="pauseBtn">Pause</button>
-    <button id="restartBtn">Restart</button>
+    <div id="controls">
+      <button id="finishBtn">Next</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="restartBtn">Restart</button>
+    </div>
     <div id="remainingList">
       <h3>Remaining People:</h3>
       <ul id="peopleList"></ul>
