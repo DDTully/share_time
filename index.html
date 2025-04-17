@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Time Bandit</title>
+  <title>Share Your Time</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; }
     label { display: block; margin: 10px 0; }
@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>Time Bandit</h1>
+<h1>Share Your Time</h1>
   <div id="setup">
     <label>Target time (HH:MM): <input id="timeInput" type="time" value="19:58"></label>
     <label>Number of people: <input id="peopleInput" type="number" min="1" value="3"></label>
@@ -33,6 +33,7 @@
       <p>Target Time: <span id="targetTimeDisplay"></span></p>
     </div>
     <button id="finishBtn">Next</button>
+    <button id="pauseBtn">Pause</button>
     <button id="restartBtn">Restart</button>
     <div id="remainingList">
       <h3>Remaining People:</h3>
@@ -62,7 +63,7 @@
     function updateList() {
       const list = document.getElementById('peopleList');
       list.innerHTML = '';
-      persons.forEach(p => {
+      persons.slice(1).forEach(p => {
         const li = document.createElement('li');
         li.textContent = `Person ${p.id}: ${formatTime(p.timeLeft)}`;
         list.appendChild(li);
@@ -83,7 +84,7 @@
       }
       const current = persons[0];
       document.getElementById('currentPerson').textContent = current.id;
-      document.getElementById('peopleRemaining').textContent = persons.length;
+      document.getElementById('peopleRemaining').textContent = Math.max(persons.length - 1, 0);
       updateList();
       updateTimeLeft();
       announceDone = false;
@@ -162,6 +163,34 @@
       document.getElementById('targetTimeDisplay').textContent = '';
     }
 
+    function togglePause() {
+      const pauseBtn = document.getElementById('pauseBtn');
+      if (pauseBtn.textContent === 'Pause') {
+        if (timerInterval) clearInterval(timerInterval);
+        if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
+        const alarm = document.getElementById('alarmAudio');
+        alarm.pause();
+        speechSynthesis.cancel();
+        pauseBtn.textContent = 'Resume';
+      } else {
+        const now = new Date();
+        const totalSecondsLeft = (endTime - now) / 1000;
+        const totalBuffer = bufferSec * (persons.length - 1);
+        const availableAll = totalSecondsLeft - totalBuffer - behindSchedule;
+        const currentLeft = persons[0].timeLeft;
+        const remainingCount = persons.length - 1;
+        if (remainingCount > 0) {
+          const availableForOthers = availableAll - currentLeft;
+          const perTimeForRemaining = availableForOthers / remainingCount;
+          for (let i = 1; i < persons.length; i++) {
+            persons[i].timeLeft = perTimeForRemaining;
+          }
+        }
+        pauseBtn.textContent = 'Pause';
+        nextPerson();
+      }
+    }
+
     function startGame() {
       const targetTimeString = document.getElementById('timeInput').value;
       const count = parseInt(document.getElementById('peopleInput').value);
@@ -204,6 +233,7 @@
     document.getElementById('startBtn').addEventListener('click', startGame);
     document.getElementById('finishBtn').addEventListener('click', handleFinish);
     document.getElementById('restartBtn').addEventListener('click', restartGame);
+    document.getElementById('pauseBtn').addEventListener('click', togglePause);
   </script>
 </body>
 </html> 
