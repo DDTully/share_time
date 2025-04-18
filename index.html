@@ -208,26 +208,8 @@
     }
 
     function restartGame() {
-      if (timerInterval) clearInterval(timerInterval);
-      if (currentClockInterval) clearInterval(currentClockInterval);
-      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
-      speechSynthesis.cancel();
-      const alarm = document.getElementById('alarmAudio');
-      alarm.pause();
-      alarm.currentTime = 0;
-      persons = [];
-      behindSchedule = 0;
-      bufferSec = 0;
-      // restore CSS display for setup (clear inline override)
-      document.getElementById('setup').style.removeProperty('display');
-      document.getElementById('app').style.display = 'none';
-      document.getElementById('finishBtn').disabled = false;
-      document.getElementById('peopleList').innerHTML = '';
-      document.getElementById('currentPerson').textContent = '';
-      document.getElementById('timeLeft').textContent = '';
-      document.getElementById('behindTime').textContent = '00:00';
-      document.getElementById('currentTime').textContent = '';
-      document.getElementById('targetTimeDisplay').textContent = '';
+      // reload page to reset everything
+      location.reload();
     }
 
     function togglePause() {
