@@ -120,6 +120,19 @@
     let announceDone = false;
     let currentClockInterval = null;
     let ttsInterval = null;
+    // Web Audio API priming variables
+    let audioCtx = null;
+    let alarmBuffer = null;
+    let alarmSource = null;
+
+    // helper to load and unlock audio buffer
+    async function primeAudioContext() {
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      await audioCtx.resume();
+      const response = await fetch('alarm.mp3');
+      const arrayBuffer = await response.arrayBuffer();
+      alarmBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    }
 
     function formatTime(seconds) {
       const neg = seconds < 0;
@@ -165,10 +178,13 @@
       timerInterval = setInterval(() => {
         current.timeLeft -= 1;
         updateTimeLeft();
-        const alarm = document.getElementById('alarmAudio');
-        alarm.volume = 0.5;
-        if (current.timeLeft <= 0 && alarm.paused) {
-          alarm.play();
+        // play buffer-based alarm if time's up
+        if (current.timeLeft <= 0 && !alarmSource && alarmBuffer) {
+          alarmSource = audioCtx.createBufferSource();
+          alarmSource.buffer = alarmBuffer;
+          alarmSource.loop = true;
+          alarmSource.connect(audioCtx.destination);
+          alarmSource.start();
         }
         if (current.timeLeft <= -5) {
           if (!ttsInterval) {
@@ -191,9 +207,12 @@
     }
 
     function handleFinish() {
-      const alarm = document.getElementById('alarmAudio');
-      alarm.pause();
-      alarm.currentTime = 0;
+      // stop buffer-based alarm if playing
+      if (alarmSource) {
+        alarmSource.stop();
+        alarmSource.disconnect();
+        alarmSource = null;
+      }
       if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
       speechSynthesis.cancel();
       if (timerInterval) clearInterval(timerInterval);
@@ -229,9 +248,12 @@
       if (currentClockInterval) clearInterval(currentClockInterval);
       if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
       speechSynthesis.cancel();
-      const alarm = document.getElementById('alarmAudio');
-      alarm.pause();
-      alarm.currentTime = 0;
+      // stop buffer-based alarm if playing
+      if (alarmSource) {
+        alarmSource.stop();
+        alarmSource.disconnect();
+        alarmSource = null;
+      }
       // reset state variables
       persons = [];
       behindSchedule = 0;
@@ -262,8 +284,12 @@
       if (pauseBtn.textContent === 'Pause') {
         if (timerInterval) clearInterval(timerInterval);
         if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
-        const alarm = document.getElementById('alarmAudio');
-        alarm.pause();
+        // stop buffer-based alarm if playing
+        if (alarmSource) {
+          alarmSource.stop();
+          alarmSource.disconnect();
+          alarmSource = null;
+        }
         speechSynthesis.cancel();
         pauseBtn.textContent = 'Resume';
       } else {
@@ -286,17 +312,8 @@
     }
 
     function startGame() {
-      // Prime the audio on user interaction to unlock playback on iOS
-      const alarm = document.getElementById('alarmAudio');
-      // temporarily mute, play and pause to unlock the audio context
-      alarm.muted = true;
-      alarm.play().then(() => {
-        alarm.pause();
-        alarm.currentTime = 0;
-        // unmute and restore intended alarm volume
-        alarm.muted = false;
-        alarm.volume = 0.5;
-      }).catch(() => {});
+      // prime Web Audio on user gesture
+      if (!audioCtx) primeAudioContext();
       const targetTimeString = document.getElementById('timeInput').value;
       const count = parseInt(document.getElementById('peopleInput').value);
       const bufferValue = parseFloat(document.getElementById('bufferInput').value);
