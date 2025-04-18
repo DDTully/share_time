@@ -311,9 +311,9 @@
       }
     }
 
-    function startGame() {
-      // prime Web Audio on user gesture
-      if (!audioCtx) primeAudioContext();
+    async function startGame() {
+      // prime Web Audio on user gesture and wait for buffer
+      if (!audioCtx) await primeAudioContext();
       const targetTimeString = document.getElementById('timeInput').value;
       const count = parseInt(document.getElementById('peopleInput').value);
       const bufferValue = parseFloat(document.getElementById('bufferInput').value);
