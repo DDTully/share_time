@@ -289,11 +289,12 @@
       // Prime the audio on user interaction to unlock playback on iOS
       const alarm = document.getElementById('alarmAudio');
       // temporarily mute, play and pause to unlock the audio context
-      alarm.volume = 0;
+      alarm.muted = true;
       alarm.play().then(() => {
         alarm.pause();
         alarm.currentTime = 0;
-        // restore intended alarm volume
+        // unmute and restore intended alarm volume
+        alarm.muted = false;
         alarm.volume = 0.5;
       }).catch(() => {});
       const targetTimeString = document.getElementById('timeInput').value;
