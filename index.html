@@ -78,6 +78,8 @@
       display: flex;
       flex-direction: column;
     }
+    /* Large centered main timer above the info panel */
+    #mainTimer { text-align: center; font-size: 3rem; margin: 0.5rem 0; }
   </style>
 </head>
 <body>
@@ -88,6 +90,8 @@
     <button id="startBtn">Start</button>
   </div>
   <div id="app" style="display:none;">
+    <!-- Main large timer -->
+    <div id="mainTimer"><p><span id="mainTimeLeft"></span></p></div>
     <div id="info">
       <p>Current Person: <span id="currentPerson"></span></p>
       <p>People Remaining: <span id="peopleRemaining"></span></p>
@@ -137,7 +141,11 @@
     }
 
     function updateTimeLeft() {
-      document.getElementById('timeLeft').textContent = formatTime(persons[0].timeLeft);
+      const formatted = formatTime(persons[0].timeLeft);
+      // update both small and main displays
+      document.getElementById('timeLeft').textContent = formatted;
+      const mainEl = document.getElementById('mainTimeLeft');
+      if (mainEl) mainEl.textContent = formatted;
     }
 
     function nextPerson() {
@@ -158,16 +166,24 @@
         current.timeLeft -= 1;
         updateTimeLeft();
         const alarm = document.getElementById('alarmAudio');
+        alarm.volume = 0.5;
         if (current.timeLeft <= 0 && alarm.paused) {
           alarm.play();
         }
         if (current.timeLeft <= -5) {
           if (!ttsInterval) {
             const others = persons.length - 1;
-            const text = others > 0 ? `${others} people remaining. Allow others to participate in spiritual enlightenment.` : 'No one else remaining. Allow others to participate in spiritual enlightenment.';
-            speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+            const noun = others === 1 ? 'person' : 'people';
+            const text = others > 0
+              ? `${others} ${noun} remaining. Allow others to participate.`
+              : 'No one else remaining. Go home.';
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.volume = 1.0;
+            speechSynthesis.speak(utterance);
             ttsInterval = setInterval(() => {
-              speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+              const utter = new SpeechSynthesisUtterance(text);
+              utter.volume = 1.0;
+              speechSynthesis.speak(utter);
             }, 5000);
           }
         }
@@ -208,8 +224,37 @@
     }
 
     function restartGame() {
-      // reload page to reset everything
-      location.reload();
+      // stop timers, alarms, and speech
+      if (timerInterval) clearInterval(timerInterval);
+      if (currentClockInterval) clearInterval(currentClockInterval);
+      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
+      speechSynthesis.cancel();
+      const alarm = document.getElementById('alarmAudio');
+      alarm.pause();
+      alarm.currentTime = 0;
+      // reset state variables
+      persons = [];
+      behindSchedule = 0;
+      // hide the app and show the setup form
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('setup').style.removeProperty('display');
+      // restore the info panel's original structure
+      document.getElementById('info').innerHTML = `
+        <p>Current Person: <span id="currentPerson"></span></p>
+        <p>People Remaining: <span id="peopleRemaining"></span></p>
+        <p>Time Left: <span id="timeLeft"></span></p>
+        <p>Behind Schedule: <span id="behindTime">00:00</span></p>
+        <p>Current Time: <span id="currentTime"></span></p>
+        <p>Target Time: <span id="targetTimeDisplay"></span></p>
+      `;
+      document.getElementById('finishBtn').disabled = false;
+      // clear dynamic displays (keeping input values intact)
+      document.getElementById('peopleList').innerHTML = '';
+      document.getElementById('currentPerson').textContent = '';
+      document.getElementById('timeLeft').textContent = '';
+      document.getElementById('behindTime').textContent = '00:00';
+      document.getElementById('currentTime').textContent = '';
+      document.getElementById('targetTimeDisplay').textContent = '';
     }
 
     function togglePause() {
