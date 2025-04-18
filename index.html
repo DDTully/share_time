@@ -286,6 +286,16 @@
     }
 
     function startGame() {
+      // Prime the audio on user interaction to unlock playback on iOS
+      const alarm = document.getElementById('alarmAudio');
+      // temporarily mute, play and pause to unlock the audio context
+      alarm.volume = 0;
+      alarm.play().then(() => {
+        alarm.pause();
+        alarm.currentTime = 0;
+        // restore intended alarm volume
+        alarm.volume = 0.5;
+      }).catch(() => {});
       const targetTimeString = document.getElementById('timeInput').value;
       const count = parseInt(document.getElementById('peopleInput').value);
       const bufferValue = parseFloat(document.getElementById('bufferInput').value);
@@ -322,6 +332,14 @@
         document.getElementById('currentTime').textContent = new Date().toLocaleTimeString([], clockOpts);
       }, 1000);
       nextPerson();
+      if ('speechSynthesis' in window) {
+        // This empty utterance (triggered by the user's click) unlocks TTS
+        const silent = new SpeechSynthesisUtterance('');
+        speechSynthesis.speak(silent);
+        speechSynthesis.cancel(); // immediately cancel so no sound
+        // Optionally call getVoices() to force voices to load early
+        speechSynthesis.getVoices();
+      }
     }
 
     document.getElementById('startBtn').addEventListener('click', startGame);
