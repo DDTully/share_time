@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Share Your Time</title>
   <style>
     :root {
@@ -110,28 +113,65 @@
       <ul id="peopleList"></ul>
     </div>
   </div>
-  <audio id="alarmAudio" loop src="alarm.mp3"></audio>
+  <!-- Using Howler.js for all playback -->
+  <script src="https://cdn.jsdelivr.net/npm/howler/dist/howler.min.js"></script>
   <script>
     let persons = [];
     let timerInterval = null;
     let bufferSec = 0;
     let behindSchedule = 0;
     let endTime = null;
-    let announceDone = false;
-    let currentClockInterval = null;
-    let ttsInterval = null;
-    // Web Audio API priming variables
-    let audioCtx = null;
-    let alarmBuffer = null;
-    let alarmSource = null;
-
-    // helper to load and unlock audio buffer
-    async function primeAudioContext() {
-      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-      await audioCtx.resume();
-      const response = await fetch('alarm.mp3');
-      const arrayBuffer = await response.arrayBuffer();
-      alarmBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    let ttsInterval = false;
+    let ttsTimeout = null;
+    // Howler.js alarm and announcement setup
+    const alarmSound = new Howl({ src:['assets/alarm.mp3'], loop:true, volume:0.5, preload:true, html5:false, mobileAutoEnable:true });
+    // Preload announcement sounds
+    const prefixSounds = {
+      many: new Howl({src:['assets/more_than_1_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
+      one:  new Howl({src:['assets/1_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
+      zero: new Howl({src:['assets/0_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true})
+    };
+    const suffixSounds = {
+      many: new Howl({src:['assets/more_than_1_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
+      one:  new Howl({src:['assets/1_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
+      zero: new Howl({src:['assets/0_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true})
+    };
+    const digitSounds = {};
+    // stop only announcement sounds
+    function stopAnnouncements() {
+      // clear any scheduled repeat
+      if (ttsTimeout) { clearTimeout(ttsTimeout); ttsTimeout = null; }
+      ttsInterval = false;
+      // stop any ongoing announcement sounds
+      Object.values(prefixSounds).forEach(h => h.stop());
+      Object.values(digitSounds).forEach(h => h.stop());
+      Object.values(suffixSounds).forEach(h => h.stop());
+    }
+    // stop both announcements and alarm
+    function stopAllSounds() {
+      stopAnnouncements();
+      if (alarmSound.playing()) alarmSound.stop();
+    }
+    // play prefix–number–suffix in sequence and repeat while active
+    function playCountAnnouncement(count) {
+      const prefix = count > 1 ? prefixSounds.many : (count === 1 ? prefixSounds.one : prefixSounds.zero);
+      const idx = Math.min(count, 100);
+      const digit = digitSounds[idx] || digitSounds[0];
+      const suffix = count > 1 ? suffixSounds.many : (count === 1 ? suffixSounds.one : suffixSounds.zero);
+      // chain playback
+      const pid = prefix.play();
+      prefix.once('end', () => {
+        const did = digit.play();
+        digit.once('end', () => {
+          const sid = suffix.play();
+          suffix.once('end', () => {
+            // after suffix, repeat if still active
+            if (ttsInterval) {
+              ttsTimeout = setTimeout(() => playCountAnnouncement(count), 5000);
+            }
+          }, sid);
+        }, did);
+      }, pid);
     }
 
     function formatTime(seconds) {
@@ -163,7 +203,8 @@
 
     function nextPerson() {
       if (timerInterval) clearInterval(timerInterval);
-      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
+      // reset announcement flag for new person
+      ttsInterval = false;
       if (persons.length === 0) {
         document.getElementById('info').innerHTML = '<p>All done!</p>';
         document.getElementById('finishBtn').disabled = true;
@@ -174,47 +215,28 @@
       document.getElementById('peopleRemaining').textContent = Math.max(persons.length - 1, 0);
       updateList();
       updateTimeLeft();
-      announceDone = false;
       timerInterval = setInterval(() => {
         current.timeLeft -= 1;
         updateTimeLeft();
-        // play buffer-based alarm if time's up
-        if (current.timeLeft <= 0 && !alarmSource && alarmBuffer) {
-          alarmSource = audioCtx.createBufferSource();
-          alarmSource.buffer = alarmBuffer;
-          alarmSource.loop = true;
-          alarmSource.connect(audioCtx.destination);
-          alarmSource.start();
+        // play alarm via Howler
+        if (current.timeLeft <= 0 && !alarmSound.playing()) {
+          alarmSound.play();
         }
+        // count announcements via Howler
         if (current.timeLeft <= -5) {
+          // start repeating announcements once
           if (!ttsInterval) {
-            const others = persons.length - 1;
-            const noun = others === 1 ? 'person' : 'people';
-            const text = others > 0
-              ? `${others} ${noun} remaining. Allow others to participate.`
-              : 'No one else remaining. Go home.';
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.volume = 1.0;
-            speechSynthesis.speak(utterance);
-            ttsInterval = setInterval(() => {
-              const utter = new SpeechSynthesisUtterance(text);
-              utter.volume = 1.0;
-              speechSynthesis.speak(utter);
-            }, 5000);
+            ttsInterval = true;
+            const remaining = persons.length - 1;
+            playCountAnnouncement(remaining);
           }
         }
       }, 1000);
     }
 
     function handleFinish() {
-      // stop buffer-based alarm if playing
-      if (alarmSource) {
-        alarmSource.stop();
-        alarmSource.disconnect();
-        alarmSource = null;
-      }
-      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
-      speechSynthesis.cancel();
+      // stop announcements and alarm
+      stopAllSounds();
       if (timerInterval) clearInterval(timerInterval);
       const current = persons.shift();
       let remainder = current.timeLeft;
@@ -243,18 +265,10 @@
     }
 
     function restartGame() {
+      // stop announcements and alarm
+      stopAllSounds();
       // stop timers, alarms, and speech
       if (timerInterval) clearInterval(timerInterval);
-      if (currentClockInterval) clearInterval(currentClockInterval);
-      if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
-      speechSynthesis.cancel();
-      // stop buffer-based alarm if playing
-      if (alarmSource) {
-        alarmSource.stop();
-        alarmSource.disconnect();
-        alarmSource = null;
-      }
-      // reset state variables
       persons = [];
       behindSchedule = 0;
       // hide the app and show the setup form
@@ -283,14 +297,8 @@
       const pauseBtn = document.getElementById('pauseBtn');
       if (pauseBtn.textContent === 'Pause') {
         if (timerInterval) clearInterval(timerInterval);
-        if (ttsInterval) { clearInterval(ttsInterval); ttsInterval = null; }
-        // stop buffer-based alarm if playing
-        if (alarmSource) {
-          alarmSource.stop();
-          alarmSource.disconnect();
-          alarmSource = null;
-        }
-        speechSynthesis.cancel();
+        // pause announcements and alarm
+        stopAllSounds();
         pauseBtn.textContent = 'Resume';
       } else {
         const now = new Date();
@@ -312,10 +320,13 @@
     }
 
     async function startGame() {
-      // prime Web Audio on user gesture and wait for buffer
-      if (!audioCtx) await primeAudioContext();
       const targetTimeString = document.getElementById('timeInput').value;
       const count = parseInt(document.getElementById('peopleInput').value);
+      // preload digit announcements up to count (max 100)
+      const preloadCount = Math.min(count, 100);
+      for (let i = 0; i <= preloadCount; i++) {
+        digitSounds[i] = new Howl({ src: [`assets/${i}.mp3`], preload: true, html5: false, mobileAutoEnable: true });
+      }
       const bufferValue = parseFloat(document.getElementById('bufferInput').value);
       if (isNaN(bufferValue) || bufferValue < 0) {
         alert('Please enter a valid buffer value (>=0)');
@@ -346,18 +357,7 @@
       document.getElementById('targetTimeDisplay').textContent = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
       const clockOpts = { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true };
       document.getElementById('currentTime').textContent = new Date().toLocaleTimeString([], clockOpts);
-      currentClockInterval = setInterval(() => {
-        document.getElementById('currentTime').textContent = new Date().toLocaleTimeString([], clockOpts);
-      }, 1000);
       nextPerson();
-      if ('speechSynthesis' in window) {
-        // This empty utterance (triggered by the user's click) unlocks TTS
-        const silent = new SpeechSynthesisUtterance('');
-        speechSynthesis.speak(silent);
-        speechSynthesis.cancel(); // immediately cancel so no sound
-        // Optionally call getVoices() to force voices to load early
-        speechSynthesis.getVoices();
-      }
     }
 
     document.getElementById('startBtn').addEventListener('click', startGame);
