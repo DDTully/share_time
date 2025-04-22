@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +21,7 @@
       --btn-pause: #fbbc04;
       --btn-restart: #b00020;
     }
+
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #0d1117;
@@ -34,18 +36,27 @@
         --btn-restart: #cf222e;
       }
     }
-    body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+
     #setup {
       max-width: 500px;
       margin: 1rem auto;
       background: var(--card-bg);
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       padding: 1rem;
       display: grid;
       grid-template-columns: 1fr;
       gap: 1rem;
     }
+
     #setup button {
       width: 100%;
       padding: 0.75rem;
@@ -57,51 +68,137 @@
       color: var(--btn-text);
       cursor: pointer;
     }
+
     #app {
       max-width: 500px;
       margin: 1rem auto;
       background: var(--card-bg);
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       padding: 1rem;
       display: block;
     }
-    label { display: block; margin: 0.5rem 0; font-size: 1rem; }
-    input[type="number"], input[type="time"], button { width: 100%; padding: 0.75rem; margin: 0.5rem 0; font-size: 1rem; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--input-border); }
-    button { background: var(--btn-bg); color: var(--btn-text); border: none; cursor: pointer; }
-    button:hover { background: var(--btn-hover); }
-    button#finishBtn { background: var(--btn-next); color: var(--btn-text); }
-    button#pauseBtn { background: var(--btn-pause); color: var(--btn-text); }
-    button#restartBtn { background: var(--btn-restart); color: var(--btn-text); }
-    #info p { display: grid; grid-template-columns: 1fr auto; margin: 0.5rem 0; }
-    #controls { display: flex; justify-content: space-between; gap: 0.5rem; margin: 1rem 0; }
-    #controls button { flex: 1; margin: 0; }
-    #remainingList h3 { margin-top: 1rem; }
-    #remainingList ul { list-style: none; padding: 0; }
-    #remainingList li { padding: 0.25rem 0; border-bottom: 1px solid #eee; }
-    @media (min-width: 600px) {
-      input[type="number"], input[type="time"], button { width: auto; display: inline-block; margin-right: 0.5rem; }
-      #setup, #app { padding: 2rem; }
+
+    label {
+      display: block;
+      margin: 0.5rem 0;
+      font-size: 1rem;
     }
+
+    input[type="number"],
+    input[type="time"],
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: 1px solid var(--input-border);
+    }
+
+    button {
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--btn-hover);
+    }
+
+    button#finishBtn {
+      background: var(--btn-next);
+      color: var(--btn-text);
+    }
+
+    button#pauseBtn {
+      background: var(--btn-pause);
+      color: var(--btn-text);
+    }
+
+    button#restartBtn {
+      background: var(--btn-restart);
+      color: var(--btn-text);
+    }
+
+    #info p {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      margin: 0.5rem 0;
+    }
+
+    #controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+
+    #controls button {
+      flex: 1;
+      margin: 0;
+    }
+
+    #remainingList h3 {
+      margin-top: 1rem;
+    }
+
+    #remainingList ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #remainingList li {
+      padding: 0.25rem 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    @media (min-width: 600px) {
+
+      input[type="number"],
+      input[type="time"],
+      button {
+        width: auto;
+        display: inline-block;
+        margin-right: 0.5rem;
+      }
+
+      #setup,
+      #app {
+        padding: 2rem;
+      }
+    }
+
     #setup label {
       display: flex;
       flex-direction: column;
     }
-    #mainTimer { text-align: center; font-size: 3rem; margin: 0.5rem 0; }
 
+    #mainTimer {
+      text-align: center;
+      font-size: 3rem;
+      margin: 0.5rem 0;
+    }
   </style>
 </head>
+
 <body>
 
   <div id="setup">
     <label>Target time (HH:MM): <input id="timeInput" type="time" value="19:58"></label>
-    <label>Number of people: <input id="peopleInput" type="number" min="1" max="100" value="10" inputmode="numeric"></label>
-    <label>Buffer between (seconds): <input id="bufferInput" type="number" min="0" value="10" inputmode="numeric"></label>
+    <label>Number of people: <input id="peopleInput" type="number" min="1" max="100" value="10"
+        inputmode="numeric"></label>
+    <label>Buffer between (seconds): <input id="bufferInput" type="number" min="0" value="10"
+        inputmode="numeric"></label>
     <button id="startBtn">Start</button>
   </div>
   <div id="app" style="display:none;">
     <!-- Main large timer -->
-    <div id="mainTimer"><p><span id="mainTimeLeft"></span></p></div>
+    <div id="mainTimer">
+      <p><span id="mainTimeLeft"></span></p>
+    </div>
     <div id="info">
       <p>Current Person: <span id="currentPerson"></span></p>
       <p>People Remaining: <span id="peopleRemaining"></span></p>
@@ -130,16 +227,16 @@
     let endTime = null;
     let ttsInterval = false;
     let ttsTimeout = null;
-    const alarmSound = new Howl({ src:['assets/alarm.mp3'], loop:true, volume:0.5, preload:true, html5:false, mobileAutoEnable:true });
+    const alarmSound = new Howl({ src: ['assets/alarm.mp3'], loop: true, volume: 0.5, preload: true, html5: false, mobileAutoEnable: true });
     const prefixSounds = {
-      many: new Howl({src:['assets/more_than_1_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
-      one:  new Howl({src:['assets/1_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
-      zero: new Howl({src:['assets/0_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true})
+      many: new Howl({ src: ['assets/more_than_1_left_prefix.mp3'], preload: true, html5: false, mobileAutoEnable: true }),
+      one: new Howl({ src: ['assets/1_left_prefix.mp3'], preload: true, html5: false, mobileAutoEnable: true }),
+      zero: new Howl({ src: ['assets/0_left_prefix.mp3'], preload: true, html5: false, mobileAutoEnable: true })
     };
     const suffixSounds = {
-      many: new Howl({src:['assets/more_than_1_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
-      one:  new Howl({src:['assets/1_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
-      zero: new Howl({src:['assets/0_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true})
+      many: new Howl({ src: ['assets/more_than_1_left_suffix.mp3'], preload: true, html5: false, mobileAutoEnable: true }),
+      one: new Howl({ src: ['assets/1_left_suffix.mp3'], preload: true, html5: false, mobileAutoEnable: true }),
+      zero: new Howl({ src: ['assets/0_left_suffix.mp3'], preload: true, html5: false, mobileAutoEnable: true })
     };
     const digitSounds = {};
 
@@ -159,31 +256,31 @@
     }
 
     function playCountAnnouncement(count) {
-        stopAnnouncements();
-        ttsInterval = true;
-        const prefix = count > 1 ? prefixSounds.many : (count === 1 ? prefixSounds.one : prefixSounds.zero);
-        const digitIndex = Math.max(0, Math.min(count, 100));
-        const digit = digitSounds[digitIndex];
-        const suffix = count > 1 ? suffixSounds.many : (count === 1 ? suffixSounds.one : suffixSounds.zero);
-        const playNextSound = (sound, nextSound, repeatCount) => {
-            if (!sound || !ttsInterval) {
-                 if (sound === suffix && ttsInterval) {
-                     ttsTimeout = setTimeout(() => playCountAnnouncement(repeatCount), 5000);
-                 }
-                 return;
+      stopAnnouncements();
+      ttsInterval = true;
+      const prefix = count > 1 ? prefixSounds.many : (count === 1 ? prefixSounds.one : prefixSounds.zero);
+      const digitIndex = Math.max(0, Math.min(count, 100));
+      const digit = digitSounds[digitIndex];
+      const suffix = count > 1 ? suffixSounds.many : (count === 1 ? suffixSounds.one : suffixSounds.zero);
+      const playNextSound = (sound, nextSound, repeatCount) => {
+        if (!sound || !ttsInterval) {
+          if (sound === suffix && ttsInterval) {
+            ttsTimeout = setTimeout(() => playCountAnnouncement(repeatCount), 5000);
+          }
+          return;
+        }
+        const id = sound.play();
+        sound.once('end', () => {
+          if (ttsInterval) {
+            if (nextSound) {
+              playNextSound(nextSound, nextSound === digit ? suffix : null, repeatCount);
+            } else {
+              ttsTimeout = setTimeout(() => playCountAnnouncement(repeatCount), 5000);
             }
-            const id = sound.play();
-            sound.once('end', () => {
-                if(ttsInterval) {
-                    if (nextSound) {
-                       playNextSound(nextSound, nextSound === digit ? suffix : null, repeatCount);
-                    } else {
-                       ttsTimeout = setTimeout(() => playCountAnnouncement(repeatCount), 5000);
-                    }
-                }
-            }, id);
-        };
-        playNextSound(prefix, digit, count);
+          }
+        }, id);
+      };
+      playNextSound(prefix, digit, count);
     }
 
 
@@ -240,11 +337,11 @@
         }
         if (current.timeLeft <= -5) {
           if (!ttsInterval) {
-             const remaining = persons.length - 1;
-             playCountAnnouncement(remaining);
+            const remaining = persons.length - 1;
+            playCountAnnouncement(remaining);
           }
         } else if (current.timeLeft > -5 && ttsInterval) {
-             stopAnnouncements();
+          stopAnnouncements();
         }
       }, 1000);
     }
@@ -256,35 +353,37 @@
       const current = persons.shift();
 
       if (current) {
-          let remainder = current.timeLeft;
-          if (remainder > 0 && behindSchedule > 0) {
-            const reduce = Math.min(remainder, behindSchedule);
-            behindSchedule -= reduce;
-          } else if (remainder < 0) {
-            const overtimeExcludingBuffer = remainder + bufferSec;
-            if (overtimeExcludingBuffer < 0) {
-                const penalty = -overtimeExcludingBuffer;
-                behindSchedule += penalty;
-            }
-          }
-          document.getElementById('behindTime').textContent = formatTime(behindSchedule);
-      }
+        let timeOverOrUnder = current.timeLeft;
+        let overtimeExcludingBuffer = timeOverOrUnder + bufferSec;
+        let actualOvertimePenalty = Math.max(0, -overtimeExcludingBuffer);
+        behindSchedule += actualOvertimePenalty;
 
+        if (timeOverOrUnder > 0 && behindSchedule > 0) {
+          const catchUpAmount = Math.min(timeOverOrUnder, behindSchedule);
+          behindSchedule -= catchUpAmount;
+        }
+        document.getElementById('behindTime').textContent = formatTime(behindSchedule);
+      }
 
       if (persons.length > 0) {
         const now = new Date();
-        const totalSecondsLeft = (endTime - now) / 1000;
-        const totalBuffer = bufferSec * (persons.length - 1);
-        const available = totalSecondsLeft - totalBuffer - behindSchedule;
-        const perTime = available / persons.length;
-
+        const totalSecondsUntilEnd = (endTime - now) / 1000;
+        const remainingCount = persons.length;
+        const totalBufferForRemaining = bufferSec * (remainingCount > 0 ? remainingCount - 1 : 0);
+        const totalAvailableSpeakingTimeFromNow = totalSecondsUntilEnd - totalBufferForRemaining - behindSchedule;
+        const perTime = remainingCount > 0 ? totalAvailableSpeakingTimeFromNow / remainingCount : 0;
         persons = persons.map(p => ({ id: p.id, timeLeft: perTime }));
+        document.getElementById('pauseBtn').textContent = 'Pause';
         nextPerson();
       } else {
         document.getElementById('info').innerHTML = '<p>All done!</p>';
         document.getElementById('finishBtn').disabled = true;
         document.getElementById('pauseBtn').disabled = true;
         releaseWakeLock();
+        document.getElementById('currentPerson').textContent = '';
+        updateTimeLeft();
+        document.getElementById('peopleRemaining').textContent = '0';
+        updateList();
       }
     }
 
@@ -316,8 +415,8 @@
       document.getElementById('targetTimeDisplay').textContent = '';
 
       for (const key in digitSounds) {
-         if (digitSounds[key] && digitSounds[key].unload) digitSounds[key].unload();
-         delete digitSounds[key];
+        if (digitSounds[key] && digitSounds[key].unload) digitSounds[key].unload();
+        delete digitSounds[key];
       }
     }
 
@@ -330,25 +429,25 @@
       } else {
         // RESUME Logic
         if (persons.length > 0) {
-            const now = new Date();
-            const totalSecondsUntilEnd = (endTime - now) / 1000;
-            const remainingCount = persons.length;
-            const totalBufferForRemaining = bufferSec * (remainingCount - 1);
-            const totalAvailableSpeakingTimeFromNow = totalSecondsUntilEnd - totalBufferForRemaining - behindSchedule;
-            const currentTimeLeftAtPause = persons[0].timeLeft;
-            const availableSpeakingTimeForFuture = totalAvailableSpeakingTimeFromNow - currentTimeLeftAtPause;
-            const remainingFutureCount = remainingCount - 1;
+          const now = new Date();
+          const totalSecondsUntilEnd = (endTime - now) / 1000;
+          const remainingCount = persons.length;
+          const totalBufferForRemaining = bufferSec * (remainingCount - 1);
+          const totalAvailableSpeakingTimeFromNow = totalSecondsUntilEnd - totalBufferForRemaining - behindSchedule;
+          const currentTimeLeftAtPause = persons[0].timeLeft;
+          const availableSpeakingTimeForFuture = totalAvailableSpeakingTimeFromNow - currentTimeLeftAtPause;
+          const remainingFutureCount = remainingCount - 1;
 
-            if (remainingFutureCount > 0) {
-                 const perTimeForFuture = availableSpeakingTimeForFuture / remainingFutureCount;
-                 for (let i = 1; i < persons.length; i++) {
-                     persons[i].timeLeft = perTimeForFuture;
-                 }
+          if (remainingFutureCount > 0) {
+            const perTimeForFuture = availableSpeakingTimeForFuture / remainingFutureCount;
+            for (let i = 1; i < persons.length; i++) {
+              persons[i].timeLeft = perTimeForFuture;
             }
-            pauseBtn.textContent = 'Pause';
-            nextPerson();
+          }
+          pauseBtn.textContent = 'Pause';
+          nextPerson();
         } else {
-             restartGame();
+          restartGame();
         }
       }
     }
@@ -360,7 +459,7 @@
       const bufferValue = parseFloat(document.getElementById('bufferInput').value);
 
       if (!targetTimeString) {
-         alert('Please enter a target time.'); return;
+        alert('Please enter a target time.'); return;
       }
       if (isNaN(count) || count <= 0) {
         alert('Please enter a positive number of people.'); return;
@@ -372,7 +471,7 @@
       const preloadCount = Math.min(count, 100);
       for (let i = 0; i <= preloadCount; i++) {
         if (!digitSounds[i]) {
-           digitSounds[i] = new Howl({ src: [`assets/${i}.mp3`], preload: true, html5: false, mobileAutoEnable: true });
+          digitSounds[i] = new Howl({ src: [`assets/${i}.mp3`], preload: true, html5: false, mobileAutoEnable: true });
         }
       }
 
@@ -383,7 +482,7 @@
       const now = new Date();
       let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
       if (target <= now) {
-          target.setDate(target.getDate() + 1);
+        target.setDate(target.getDate() + 1);
       }
       endTime = target;
 
@@ -392,8 +491,8 @@
       const usableSeconds = totalSeconds - totalBuffer;
 
       if (usableSeconds <= 0 && count > 0) {
-          alert(`The target time is too soon for ${count} people with a ${bufferSec}s buffer. Each person would get less than or equal to 0 seconds.`);
-          return;
+        alert(`The target time is too soon for ${count} people with a ${bufferSec}s buffer. Each person would get less than or equal to 0 seconds.`);
+        return;
       }
 
       const perTime = usableSeconds / count;
@@ -417,15 +516,15 @@
           wakeLockSentinel = await navigator.wakeLock.request('screen');
           console.log('Wake Lock active.');
           if (wakeLockSentinel) {
-             wakeLockSentinel.addEventListener('release', () => {
-               console.log('Wake Lock was released');
-               if (document.getElementById('app').style.display !== 'none') {
-                    console.log('App still active, attempting to re-request Wake Lock...');
-                    requestWakeLock();
-               } else {
-                    wakeLockSentinel = null;
-               }
-             });
+            wakeLockSentinel.addEventListener('release', () => {
+              console.log('Wake Lock was released');
+              if (document.getElementById('app').style.display !== 'none') {
+                console.log('App still active, attempting to re-request Wake Lock...');
+                requestWakeLock();
+              } else {
+                wakeLockSentinel = null;
+              }
+            });
           }
         } catch (err) {
           console.error(`${err.name}, ${err.message}`);
@@ -444,14 +543,14 @@
       }
     }
 
-    document.getElementById('timeInput').addEventListener('focus', function() {
-        this.select();
+    document.getElementById('timeInput').addEventListener('focus', function () {
+      setTimeout(() => this.select(), 50);
     });
-    document.getElementById('peopleInput').addEventListener('focus', function() {
-        this.select();
+    document.getElementById('peopleInput').addEventListener('focus', function () {
+      setTimeout(() => this.select(), 50);
     });
-    document.getElementById('bufferInput').addEventListener('focus', function() {
-        this.select();
+    document.getElementById('bufferInput').addEventListener('focus', function () {
+      setTimeout(() => this.select(), 50);
     });
 
     document.getElementById('startBtn').addEventListener('click', startGame);
@@ -459,18 +558,19 @@
     document.getElementById('restartBtn').addEventListener('click', restartGame);
     document.getElementById('pauseBtn').addEventListener('click', togglePause);
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && document.getElementById('app').style.display !== 'none') {
-           console.log('Visibility change: Attempting to re-request Wake Lock...');
-           if (wakeLockSentinel === null) {
-               requestWakeLock();
-           } else {
-               console.log('Wake Lock already held.');
-           }
-        } else if (document.visibilityState === 'hidden') {
-            releaseWakeLock();
+      if (document.visibilityState === 'visible' && document.getElementById('app').style.display !== 'none') {
+        console.log('Visibility change: Attempting to re-request Wake Lock...');
+        if (wakeLockSentinel === null) {
+          requestWakeLock();
+        } else {
+          console.log('Wake Lock already held.');
         }
-     });
-     window.addEventListener('beforeunload', releaseWakeLock);
+      } else if (document.visibilityState === 'hidden') {
+        releaseWakeLock();
+      }
+    });
+    window.addEventListener('beforeunload', releaseWakeLock);
   </script>
 </body>
+
 </html>
