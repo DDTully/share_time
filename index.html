@@ -22,23 +22,22 @@
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        /* GitHub Dark Mode Colors */
         --bg: #0d1117;
         --card-bg: #161b22;
         --text: #c9d1d9;
         --input-border: #30363d;
-        --btn-bg: #238636;      /* Green success */
+        --btn-bg: #238636;
         --btn-text: #ffffff;
         --btn-hover: #2ea043;
-        --btn-next: #0969da;    /* Blue primary */
-        --btn-pause: #dbab09;   /* Yellow warning */
-        --btn-restart: #cf222e; /* Red danger */
+        --btn-next: #0969da;
+        --btn-pause: #dbab09;
+        --btn-restart: #cf222e;
       }
     }
     body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
     #setup {
-      max-width: 500px; /* Keep max width to make it appear portrait-like */
-      margin: 1rem auto; /* Center horizontally */
+      max-width: 500px;
+      margin: 1rem auto;
       background: var(--card-bg);
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -59,16 +58,15 @@
       cursor: pointer;
     }
     #app {
-      max-width: 500px; /* Keep max width to make it appear portrait-like */
-      margin: 1rem auto; /* Center horizontally */
+      max-width: 500px;
+      margin: 1rem auto;
       background: var(--card-bg);
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 1rem;
-      display: block; /* Default display when not hidden */
+      display: block;
     }
     label { display: block; margin: 0.5rem 0; font-size: 1rem; }
-    /* Adjust input width slightly if needed, but default 100% with box-sizing works */
     input[type="number"], input[type="time"], button { width: 100%; padding: 0.75rem; margin: 0.5rem 0; font-size: 1rem; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--input-border); }
     button { background: var(--btn-bg); color: var(--btn-text); border: none; cursor: pointer; }
     button:hover { background: var(--btn-hover); }
@@ -82,8 +80,6 @@
     #remainingList ul { list-style: none; padding: 0; }
     #remainingList li { padding: 0.25rem 0; border-bottom: 1px solid #eee; }
     @media (min-width: 600px) {
-      /* This media query was already making things inline on larger screens,
-         which still works fine within the max-width container in landscape */
       input[type="number"], input[type="time"], button { width: auto; display: inline-block; margin-right: 0.5rem; }
       #setup, #app { padding: 2rem; }
     }
@@ -134,9 +130,7 @@
     let endTime = null;
     let ttsInterval = false;
     let ttsTimeout = null;
-    // Howler.js alarm and announcement setup
     const alarmSound = new Howl({ src:['assets/alarm.mp3'], loop:true, volume:0.5, preload:true, html5:false, mobileAutoEnable:true });
-    // Preload announcement sounds
     const prefixSounds = {
       many: new Howl({src:['assets/more_than_1_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
       one:  new Howl({src:['assets/1_left_prefix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
@@ -147,43 +141,32 @@
       one:  new Howl({src:['assets/1_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true}),
       zero: new Howl({src:['assets/0_left_suffix.mp3'], preload:true, html5:false, mobileAutoEnable:true})
     };
-    const digitSounds = {}; // Will be populated during startGame
+    const digitSounds = {};
 
-    // Wake Lock Variable
     let wakeLockSentinel = null;
 
-    // stop only announcement sounds
     function stopAnnouncements() {
-      // clear any scheduled repeat
       if (ttsTimeout) { clearTimeout(ttsTimeout); ttsTimeout = null; }
       ttsInterval = false;
-      // stop any ongoing announcement sounds (prefixes, digits, suffixes)
       Object.values(prefixSounds).forEach(h => h.stop());
       for (const key in digitSounds) { if (digitSounds[key]) digitSounds[key].stop(); }
       Object.values(suffixSounds).forEach(h => h.stop());
     }
-    // stop both announcements and alarm
+
     function stopAllSounds() {
       stopAnnouncements();
       if (alarmSound.playing()) alarmSound.stop();
     }
 
-     // play prefix–number–suffix in sequence and repeat while active
     function playCountAnnouncement(count) {
-        stopAnnouncements(); // Ensure only one announcement chain is active
-        ttsInterval = true; // Set flag to indicate announcements are desired
+        stopAnnouncements();
+        ttsInterval = true;
         const prefix = count > 1 ? prefixSounds.many : (count === 1 ? prefixSounds.one : prefixSounds.zero);
-        // Fallback for digits outside 0-100 range if needed, though limited to 100 preloads
         const digitIndex = Math.max(0, Math.min(count, 100));
-        const digit = digitSounds[digitIndex]; // Assumes digitSounds[digitIndex] is preloaded
-
+        const digit = digitSounds[digitIndex];
         const suffix = count > 1 ? suffixSounds.many : (count === 1 ? suffixSounds.one : suffixSounds.zero);
-
-        // Use Howler's chaining or manual sequencing with 'end' event
-        // Manual sequencing is more robust for controlling repeats
         const playNextSound = (sound, nextSound, repeatCount) => {
-            if (!sound || !ttsInterval) { // Stop if sound is null or announcements are disabled
-                 // If this was the end of a valid chain and announcements are still desired
+            if (!sound || !ttsInterval) {
                  if (sound === suffix && ttsInterval) {
                      ttsTimeout = setTimeout(() => playCountAnnouncement(repeatCount), 5000);
                  }
@@ -191,23 +174,22 @@
             }
             const id = sound.play();
             sound.once('end', () => {
-                if(ttsInterval) { // Check again if announcements are still desired after this sound ends
+                if(ttsInterval) {
                     if (nextSound) {
-                       playNextSound(nextSound, nextSound === digit ? suffix : null, repeatCount); // Sequence prefix -> digit -> suffix
-                    } else { // Last sound in sequence (suffix) finished
-                       ttsTimeout = setTimeout(() => playCountAnnouncement(repeatCount), 5000); // Schedule next announcement
+                       playNextSound(nextSound, nextSound === digit ? suffix : null, repeatCount);
+                    } else {
+                       ttsTimeout = setTimeout(() => playCountAnnouncement(repeatCount), 5000);
                     }
                 }
             }, id);
         };
-        // Start the sequence
         playNextSound(prefix, digit, count);
     }
 
 
     function formatTime(seconds) {
       const neg = seconds < 0;
-      const s = Math.ceil(Math.abs(seconds)); // Use ceil for display, show 0:00 at start of last second
+      const s = Math.ceil(Math.abs(seconds));
       const m = Math.floor(s / 60);
       const sec = s % 60;
       const formatted = `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
@@ -226,68 +208,60 @@
 
     function updateTimeLeft() {
       const formatted = formatTime(persons[0].timeLeft);
-      // update both small and main displays
       document.getElementById('timeLeft').textContent = formatted;
       const mainEl = document.getElementById('mainTimeLeft');
       if (mainEl) mainEl.textContent = formatted;
-
-       // Update current time display
       const clockOpts = { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true };
       document.getElementById('currentTime').textContent = new Date().toLocaleTimeString([], clockOpts);
     }
 
     function nextPerson() {
       if (timerInterval) clearInterval(timerInterval);
-      stopAllSounds(); // Stop any lingering sounds from the previous person/state
+      stopAllSounds();
 
       if (persons.length === 0) {
         document.getElementById('info').innerHTML = '<p>All done!</p>';
         document.getElementById('finishBtn').disabled = true;
         document.getElementById('pauseBtn').disabled = true;
-        releaseWakeLock(); // Release wake lock when done
+        releaseWakeLock();
         return;
       }
       const current = persons[0];
       document.getElementById('currentPerson').textContent = current.id;
       document.getElementById('peopleRemaining').textContent = Math.max(persons.length - 1, 0);
       updateList();
-      updateTimeLeft(); // Initial display
+      updateTimeLeft();
 
       timerInterval = setInterval(() => {
         current.timeLeft -= 1;
         updateTimeLeft();
-        // play alarm via Howler when time is up/negative
         if (current.timeLeft <= 0 && !alarmSound.playing()) {
           alarmSound.play();
         }
-        // count announcements via Howler
-        // Announce remaining people when current person goes significantly overtime
-        if (current.timeLeft <= -5) { // Announce when 5 or more seconds overtime
-          if (!ttsInterval) { // Only start the repeating announcement if not already started
+        if (current.timeLeft <= -5) {
+          if (!ttsInterval) {
              const remaining = persons.length - 1;
              playCountAnnouncement(remaining);
           }
-        } else if (current.timeLeft > -5 && ttsInterval) { // Stop announcements if they somehow become positive again within threshold
-             stopAnnouncements(); // Clear timeout and flag
+        } else if (current.timeLeft > -5 && ttsInterval) {
+             stopAnnouncements();
         }
       }, 1000);
     }
 
     function handleFinish() {
-      stopAllSounds(); // Stop all sounds immediately on finish
+      stopAllSounds();
       if (timerInterval) clearInterval(timerInterval);
 
-      const current = persons.shift(); // Remove the finished person
+      const current = persons.shift();
 
-      if (current) { // Only calculate penalty/gain if there was a current person
+      if (current) {
           let remainder = current.timeLeft;
           if (remainder > 0 && behindSchedule > 0) {
-            // If time was left and we are behind schedule, use left time to catch up
             const reduce = Math.min(remainder, behindSchedule);
             behindSchedule -= reduce;
           } else if (remainder < 0) {
-            // If overtime, calculate penalty *after* buffer
-            const overtimeExcludingBuffer = remainder + bufferSec; // e.g., -15 timeLeft, 10s buffer -> -5 actual overtime
+            const overtimeExcludingBuffer = remainder + bufferSec;
             if (overtimeExcludingBuffer < 0) {
                 const penalty = -overtimeExcludingBuffer;
                 behindSchedule += penalty;
@@ -298,39 +272,31 @@
 
 
       if (persons.length > 0) {
-        // Recalculate time for remaining people
         const now = new Date();
         const totalSecondsLeft = (endTime - now) / 1000;
-        const totalBuffer = bufferSec * (persons.length - 1); // Buffer only *between* remaining people
+        const totalBuffer = bufferSec * (persons.length - 1);
         const available = totalSecondsLeft - totalBuffer - behindSchedule;
-
-        // Ensure available time is not negative for calculation, though perTime can be
         const perTime = available / persons.length;
 
         persons = persons.map(p => ({ id: p.id, timeLeft: perTime }));
-        nextPerson(); // Start timer for the next person
+        nextPerson();
       } else {
-        // All done
         document.getElementById('info').innerHTML = '<p>All done!</p>';
         document.getElementById('finishBtn').disabled = true;
-        document.getElementById('pauseBtn').disabled = true; // Disable pause when finished
-        releaseWakeLock(); // Release wake lock when done
+        document.getElementById('pauseBtn').disabled = true;
+        releaseWakeLock();
       }
     }
 
     function restartGame() {
-      stopAllSounds(); // Stop all sounds
-      releaseWakeLock(); // Release wake lock
+      stopAllSounds();
+      releaseWakeLock();
       if (timerInterval) clearInterval(timerInterval);
       persons = [];
       behindSchedule = 0;
-      endTime = null; // Clear target time
-
-      // hide the app and show the setup form
+      endTime = null;
       document.getElementById('app').style.display = 'none';
       document.getElementById('setup').style.removeProperty('display');
-
-      // restore the info panel's original structure
       document.getElementById('info').innerHTML = `
         <p>Current Person: <span id="currentPerson"></span></p>
         <p>People Remaining: <span id="peopleRemaining"></span></p>
@@ -339,12 +305,9 @@
         <p>Current Time: <span id="currentTime"></span></p>
         <p>Target Time: <span id="targetTimeDisplay"></span></p>
       `;
-      // Re-enable buttons
       document.getElementById('finishBtn').disabled = false;
       document.getElementById('pauseBtn').disabled = false;
-      document.getElementById('pauseBtn').textContent = 'Pause'; // Reset pause button text
-
-      // clear dynamic displays
+      document.getElementById('pauseBtn').textContent = 'Pause';
       document.getElementById('peopleList').innerHTML = '';
       document.getElementById('currentPerson').textContent = '';
       document.getElementById('timeLeft').textContent = '';
@@ -352,7 +315,6 @@
       document.getElementById('currentTime').textContent = '';
       document.getElementById('targetTimeDisplay').textContent = '';
 
-       // Clear preloaded digit sounds (optional, but good practice)
       for (const key in digitSounds) {
          if (digitSounds[key] && digitSounds[key].unload) digitSounds[key].unload();
          delete digitSounds[key];
@@ -366,56 +328,50 @@
         stopAllSounds(); // Stop all sounds when pausing
         pauseBtn.textContent = 'Resume';
       } else {
-        // Resume logic - Recalculate time and start the next person
+        // RESUME Logic
         if (persons.length > 0) {
             const now = new Date();
-            const totalSecondsLeft = (endTime - now) / 1000;
-            const totalBuffer = bufferSec * (persons.length - 1);
-            const availableAll = totalSecondsLeft - totalBuffer - behindSchedule;
+            const totalSecondsUntilEnd = (endTime - now) / 1000;
+            const remainingCount = persons.length;
+            const totalBufferForRemaining = bufferSec * (remainingCount - 1);
+            const totalAvailableSpeakingTimeFromNow = totalSecondsUntilEnd - totalBufferForRemaining - behindSchedule;
+            const currentTimeLeftAtPause = persons[0].timeLeft;
+            const availableSpeakingTimeForFuture = totalAvailableSpeakingTimeFromNow - currentTimeLeftAtPause;
+            const remainingFutureCount = remainingCount - 1;
 
-            // Ensure we don't divide by zero if somehow persons array got corrupted
-            if (persons.length > 0) {
-                 // The total available time needs to be distributed among ALL remaining people (including current)
-                 const perTime = availableAll / persons.length;
-
-                 // Update time for all people based on the new calculation
-                 persons = persons.map(p => ({ id: p.id, timeLeft: perTime }));
-
-                 pauseBtn.textContent = 'Pause';
-                 nextPerson(); // Continue the timer
-            } else {
-                 // If somehow paused when no people left, just reset state
-                 restartGame();
+            if (remainingFutureCount > 0) {
+                 const perTimeForFuture = availableSpeakingTimeForFuture / remainingFutureCount;
+                 for (let i = 1; i < persons.length; i++) {
+                     persons[i].timeLeft = perTimeForFuture;
+                 }
             }
+            pauseBtn.textContent = 'Pause';
+            nextPerson();
         } else {
-             // If somehow paused when no people left, just reset state
              restartGame();
         }
       }
     }
+
 
     async function startGame() {
       const targetTimeString = document.getElementById('timeInput').value;
       const count = parseInt(document.getElementById('peopleInput').value);
       const bufferValue = parseFloat(document.getElementById('bufferInput').value);
 
-      // Basic validation
       if (!targetTimeString) {
          alert('Please enter a target time.'); return;
       }
       if (isNaN(count) || count <= 0) {
         alert('Please enter a positive number of people.'); return;
       }
-      // Allow 0 for buffer, but check if it's a valid number
       if (isNaN(bufferValue) || bufferValue < 0) {
         alert('Please enter a valid buffer value (>=0).'); return;
       }
 
-
-      // Preload digit announcements up to count (max 100 for audio assets)
       const preloadCount = Math.min(count, 100);
       for (let i = 0; i <= preloadCount; i++) {
-        if (!digitSounds[i]) { // Only create if not already loaded
+        if (!digitSounds[i]) {
            digitSounds[i] = new Howl({ src: [`assets/${i}.mp3`], preload: true, html5: false, mobileAutoEnable: true });
         }
       }
@@ -426,19 +382,18 @@
       const [hours, minutes] = targetTimeString.split(':').map(Number);
       const now = new Date();
       let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
-      // If target time is in the past today, set it for tomorrow
       if (target <= now) {
           target.setDate(target.getDate() + 1);
       }
       endTime = target;
 
       const totalSeconds = (target - now) / 1000;
-      const totalBuffer = bufferSec * (count - 1); // Buffer time is only *between* people
+      const totalBuffer = bufferSec * (count - 1);
       const usableSeconds = totalSeconds - totalBuffer;
 
       if (usableSeconds <= 0 && count > 0) {
           alert(`The target time is too soon for ${count} people with a ${bufferSec}s buffer. Each person would get less than or equal to 0 seconds.`);
-          return; // Prevent starting with invalid timing
+          return;
       }
 
       const perTime = usableSeconds / count;
@@ -447,46 +402,34 @@
       for (let i = 1; i <= count; i++) {
         persons.push({ id: i, timeLeft: perTime });
       }
-
-      // Hide setup, show app
       document.getElementById('setup').style.display = 'none';
       document.getElementById('app').style.display = 'block';
-
-      // Request wake lock after showing the app
       requestWakeLock();
 
-      // Update info displays
       document.getElementById('behindTime').textContent = formatTime(behindSchedule);
       document.getElementById('targetTimeDisplay').textContent = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-
-      // Start the first person's timer
       nextPerson();
     }
-
-    // --- Wake Lock API Functions ---
 
     async function requestWakeLock() {
       if ('wakeLock' in navigator) {
         try {
           wakeLockSentinel = await navigator.wakeLock.request('screen');
           console.log('Wake Lock active.');
-          // Add a listener to re-request wake lock if released by the OS
-          if (wakeLockSentinel) { // Ensure sentinel exists before adding listener
+          if (wakeLockSentinel) {
              wakeLockSentinel.addEventListener('release', () => {
                console.log('Wake Lock was released');
-               // Optionally re-request here if the app is still active (e.g., #app visible)
                if (document.getElementById('app').style.display !== 'none') {
                     console.log('App still active, attempting to re-request Wake Lock...');
-                    requestWakeLock(); // Attempt to get it back
+                    requestWakeLock();
                } else {
-                    wakeLockSentinel = null; // Ensure sentinel is null if app is hidden
+                    wakeLockSentinel = null;
                }
              });
           }
         } catch (err) {
-          // The wake lock request failed - usually due to the user refusing or browser policy
           console.error(`${err.name}, ${err.message}`);
-          wakeLockSentinel = null; // Ensure sentinel is null on failure
+          wakeLockSentinel = null;
         }
       } else {
         console.warn('Wake Lock API not supported.');
@@ -501,7 +444,6 @@
       }
     }
 
-    // --- Select all on focus for input fields ---
     document.getElementById('timeInput').addEventListener('focus', function() {
         this.select();
     });
@@ -512,33 +454,23 @@
         this.select();
     });
 
-    // --- Event Listeners ---
     document.getElementById('startBtn').addEventListener('click', startGame);
     document.getElementById('finishBtn').addEventListener('click', handleFinish);
     document.getElementById('restartBtn').addEventListener('click', restartGame);
     document.getElementById('pauseBtn').addEventListener('click', togglePause);
-
-     // Listen for visibility changes to re-request wake lock if needed
-     // (e.g., user switches apps and comes back)
-     document.addEventListener('visibilitychange', () => {
-        // Only attempt to re-request if the document is now visible AND the app is currently being displayed
+    document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && document.getElementById('app').style.display !== 'none') {
            console.log('Visibility change: Attempting to re-request Wake Lock...');
-           // Check if we *already* have a lock, no need to request again
            if (wakeLockSentinel === null) {
                requestWakeLock();
            } else {
                console.log('Wake Lock already held.');
            }
         } else if (document.visibilityState === 'hidden') {
-            // Optional: Release wake lock when hidden to save battery?
-            // releaseWakeLock(); // Decide if you want this behavior
+            releaseWakeLock();
         }
      });
-
-     // Release wake lock if the user navigates away or closes the page
      window.addEventListener('beforeunload', releaseWakeLock);
-
   </script>
 </body>
 </html>
