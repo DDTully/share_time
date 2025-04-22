@@ -188,7 +188,7 @@
 
   <div id="setup">
     <label>Target time (HH:MM): <input id="timeInput" type="time" value="19:58"></label>
-    <label>Number of people: <input id="peopleInput" type="number" min="1" max="100" value="10"
+    <label>Number of people (1-100): <input id="peopleInput" type="number" min="1" max="100" value="10"
         inputmode="numeric"></label>
     <label>Buffer between (seconds): <input id="bufferInput" type="number" min="0" value="10"
         inputmode="numeric"></label>
@@ -242,6 +242,24 @@
 
     let wakeLockSentinel = null;
 
+    function validatePeopleInput() {
+      const peopleInput = document.getElementById('peopleInput');
+      const startBtn = document.getElementById('startBtn');
+      const count = parseInt(peopleInput.value, 10);
+
+      if (isNaN(count) || count < 1 || count > 100) {
+        startBtn.disabled = true;
+        startBtn.textContent = 'Invalid number of people';
+        startBtn.style.backgroundColor = 'red';
+        peopleInput.style.borderColor = 'red'; 
+      } else {
+        startBtn.disabled = false;
+        peopleInput.style.borderColor = ''; 
+        startBtn.textContent = 'Start';
+        startBtn.style.backgroundColor = 'var(--btn-bg)';
+      }
+    }
+
     function stopAnnouncements() {
       if (ttsTimeout) { clearTimeout(ttsTimeout); ttsTimeout = null; }
       ttsInterval = false;
@@ -282,7 +300,6 @@
       };
       playNextSound(prefix, digit, count);
     }
-
 
     function formatTime(seconds) {
       const neg = seconds < 0;
@@ -506,7 +523,7 @@
       requestWakeLock();
 
       document.getElementById('behindTime').textContent = formatTime(behindSchedule);
-      document.getElementById('targetTimeDisplay').textContent = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+      document.getElementById('targetTimeDisplay').textContent = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
       nextPerson();
     }
 
@@ -557,6 +574,10 @@
     document.getElementById('finishBtn').addEventListener('click', handleFinish);
     document.getElementById('restartBtn').addEventListener('click', restartGame);
     document.getElementById('pauseBtn').addEventListener('click', togglePause);
+    
+    document.getElementById('peopleInput').addEventListener('input', validatePeopleInput);
+    validatePeopleInput();
+
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && document.getElementById('app').style.display !== 'none') {
         console.log('Visibility change: Attempting to re-request Wake Lock...');
