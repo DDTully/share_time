@@ -411,6 +411,7 @@
         alert('Please enter a valid buffer value (>=0).'); return;
       }
 
+
       // Preload digit announcements up to count (max 100 for audio assets)
       const preloadCount = Math.min(count, 100);
       for (let i = 0; i <= preloadCount; i++) {
@@ -499,6 +500,17 @@
         console.log('Wake Lock released.');
       }
     }
+
+    // --- Select all on focus for input fields ---
+    document.getElementById('timeInput').addEventListener('focus', function() {
+        this.select();
+    });
+    document.getElementById('peopleInput').addEventListener('focus', function() {
+        this.select();
+    });
+    document.getElementById('bufferInput').addEventListener('focus', function() {
+        this.select();
+    });
 
     // --- Event Listeners ---
     document.getElementById('startBtn').addEventListener('click', startGame);
