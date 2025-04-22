@@ -68,7 +68,8 @@
       display: block; /* Default display when not hidden */
     }
     label { display: block; margin: 0.5rem 0; font-size: 1rem; }
-    input, button { width: 100%; padding: 0.75rem; margin: 0.5rem 0; font-size: 1rem; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--input-border); }
+    /* Adjust input width slightly if needed, but default 100% with box-sizing works */
+    input[type="number"], input[type="time"], button { width: 100%; padding: 0.75rem; margin: 0.5rem 0; font-size: 1rem; box-sizing: border-box; border-radius: 4px; border: 1px solid var(--input-border); }
     button { background: var(--btn-bg); color: var(--btn-text); border: none; cursor: pointer; }
     button:hover { background: var(--btn-hover); }
     button#finishBtn { background: var(--btn-next); color: var(--btn-text); }
@@ -83,7 +84,7 @@
     @media (min-width: 600px) {
       /* This media query was already making things inline on larger screens,
          which still works fine within the max-width container in landscape */
-      input, button { width: auto; display: inline-block; margin-right: 0.5rem; }
+      input[type="number"], input[type="time"], button { width: auto; display: inline-block; margin-right: 0.5rem; }
       #setup, #app { padding: 2rem; }
     }
     #setup label {
@@ -92,18 +93,14 @@
     }
     #mainTimer { text-align: center; font-size: 3rem; margin: 0.5rem 0; }
 
-    /* Removed the landscape orientation message and related styles */
-
   </style>
 </head>
 <body>
 
-  <!-- Removed the landscape orientation message div -->
-
   <div id="setup">
     <label>Target time (HH:MM): <input id="timeInput" type="time" value="19:58"></label>
-    <label>Number of people: <input id="peopleInput" type="number" min="1" max="100" value="10"></label>
-    <label>Buffer between (seconds): <input id="bufferInput" type="number" min="0" value="10"></label>
+    <label>Number of people: <input id="peopleInput" type="number" min="1" max="100" value="10" inputmode="numeric"></label>
+    <label>Buffer between (seconds): <input id="bufferInput" type="number" min="0" value="10" inputmode="numeric"></label>
     <button id="startBtn">Start</button>
   </div>
   <div id="app" style="display:none;">
@@ -409,9 +406,9 @@
       if (isNaN(count) || count <= 0) {
         alert('Please enter a positive number of people.'); return;
       }
+      // Allow 0 for buffer, but check if it's a valid number
       if (isNaN(bufferValue) || bufferValue < 0) {
         alert('Please enter a valid buffer value (>=0).'); return;
-        return;
       }
 
       // Preload digit announcements up to count (max 100 for audio assets)
